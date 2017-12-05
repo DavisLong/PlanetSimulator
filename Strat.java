@@ -5,12 +5,23 @@ import planetwars.publicapi.*;
 import java.util.*;
 
 public class Strat implements IStrategy{
+    private HashMap<Double, Long> planetMoves;
+    List<IPlanet> ownedPlanets;
+
 
     @Override
     public void takeTurn(List<IPlanet> planets, IPlanetOperations planetOperations, Queue<IEvent> eventsToExecute) {
         HashMap<Double, IEvent> planetMove = new HashMap<>();
-        HashMap<Integer, HashMap<Double, IEvent>> allMoves = new HashMap<>();
 
+        for(IPlanet planet : planets) {
+            if(planet instanceof IVisiblePlanet && getNetPop(planet, 0)) {
+                if(getNetPop(planet, 2) >= 0) {
+                    eventsToExecute.add(planetOperations.transferPeople(planet, ))
+                }
+
+
+            }
+        }
     }
 
     @Override
@@ -21,6 +32,23 @@ public class Strat implements IStrategy{
     @Override
     public boolean compete() {
         return false;
+    }
+
+    public void setOwnedPlanets(List<IPlanet> planets) {
+        for(IPlanet planet : planets) {
+            if(planet instanceof IVisiblePlanet && getNetPop(planet,0) && !ownedPlanets.contains(planet)) {
+                ownedPlanets.add(planet);
+            }
+        }
+        for(IPlanet plan : ownedPlanets) {
+            if(getNetPop(plan,0) <= 0) {
+                ownedPlanets.remove(plan);
+            }
+        }
+    }
+
+    public int hasFriendlyNeighbor(IVisiblePlanet plan) {
+
     }
 
     public boolean nextAbove(IVisiblePlanet planet) {
@@ -94,7 +122,7 @@ public class Strat implements IStrategy{
                             }
                         }
                         pop -= incoming;
-                        temp += turns;
+                        temp += (turns - temp);
                     }
                     shuttle.remove(ind);
                     turns = 100;
@@ -131,7 +159,7 @@ public class Strat implements IStrategy{
                 } else if (shuttle.get(ind).getTurnsToArrival() <= numTurns) { // Owner is we
                     pop += incoming;
                 }
-                temp += turns;
+                temp += (turns - temp);
                 shuttle.remove(ind);
 
             }
