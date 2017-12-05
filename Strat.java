@@ -8,8 +8,8 @@ public class Strat implements IStrategy{
 
     @Override
     public void takeTurn(List<IPlanet> planets, IPlanetOperations planetOperations, Queue<IEvent> eventsToExecute) {
-        HashMap<Double, IEvent> moves = new HashMap<>();
-        
+        HashMap<Double, IEvent> planetMove = new HashMap<>();
+        HashMap<Integer, HashMap<Double, IEvent>> allMoves = new HashMap<>();
 
     }
 
@@ -21,6 +21,29 @@ public class Strat implements IStrategy{
     @Override
     public boolean compete() {
         return false;
+    }
+
+    public boolean nextAbove(IVisiblePlanet planet) {
+        double pop = planet.getPopulation();
+        double h = planet.getHabitability();
+        double m = planet.getSize();
+
+        pop = pop * (1 + (h / 100));
+        if(pop >= m) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public double aboveMax(IVisiblePlanet planet) {
+        double pop = planet.getPopulation();
+        double h = planet.getHabitability();
+        double m = planet.getSize();
+
+        pop = pop * (1 + (h / 100));
+        double ret = pop - m;
+        return ret;
     }
 
     public double getNetPop(IVisiblePlanet planet, int numTurns) {
