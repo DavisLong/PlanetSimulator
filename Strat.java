@@ -5,22 +5,19 @@ import planetwars.publicapi.*;
 import java.util.*;
 
 public class Strat implements IStrategy{
-    private HashMap<Double, Long> planetMoves;
-    List<IPlanet> ownedPlanets;
 
+    private HashMap<Integer,HashMap<Integer[],Double>> moveRanks;
+    private List<IVisiblePlanet> ownedPlanets;
 
     @Override
     public void takeTurn(List<IPlanet> planets, IPlanetOperations planetOperations, Queue<IEvent> eventsToExecute) {
-        HashMap<Double, IEvent> planetMove = new HashMap<>();
 
-        for(IPlanet planet : planets) {
-            if(planet instanceof IVisiblePlanet && getNetPop(planet, 0)) {
-                if(getNetPop(planet, 2) >= 0) {
-                    eventsToExecute.add(planetOperations.transferPeople(planet, ))
-                }
-
-
-            }
+        updateOwnedPlanets(planets);
+        updatePossibleMoves(planets);
+        RankMoves();
+        Iterator<IEvent> events = getIdealEvents(planetOperations);
+        while(events.hasNext()){
+            eventsToExecute.add(events.next());
         }
     }
 
@@ -34,21 +31,78 @@ public class Strat implements IStrategy{
         return false;
     }
 
-    public void setOwnedPlanets(List<IPlanet> planets) {
-        for(IPlanet planet : planets) {
-            if(planet instanceof IVisiblePlanet && getNetPop(planet,0) && !ownedPlanets.contains(planet)) {
-                ownedPlanets.add(planet);
+
+    private Iterator<IEvent> getIdealEvents(IPlanetOperations planetOperations){
+
+        List<IEvent> events = new LinkedList<>();
+        int curPlanetID;
+        for(HashMap.Entry<Integer,HashMap<Integer[],Double>> planet :moveRanks.entrySet()){
+
+            curPlanetID = planet.getKey();
+            double max = 1.0;
+            //Stores move with highest rank
+            for(HashMap.Entry<Integer[],Double> move :moveRanks.get(curPlanetID).entrySet()) {
+                if (move.getValue() > max) {
+                    max = move.getValue();
+                }
+            }
+            //Iterates again to create event for every event that has max rank
+            for(HashMap.Entry<Integer[],Double> move :moveRanks.get(curPlanetID).entrySet()) {
+                // Also checks for no ideal moves
+                if (move.getValue() == max && max <= 1) {
+
+
+                    long numPeople = (move.getKey()[1] / 4 * getOwnedPlanet(curPlanetID).getPopulation());
+                    IPlanet to = getOwnedPlanet(move.getKey()[0]);
+                    IPlanet from = getOwnedPlanet(curPlanetID);
+                    IEvent e = planetOperations.transferPeople(from, to, numPeople);
+                    //Adds event to list so it can be added to queue during turn
+                    events.add(e);
+                }
             }
         }
-        for(IPlanet plan : ownedPlanets) {
-            if(getNetPop(plan,0) <= 0) {
-                ownedPlanets.remove(plan);
+        return events.iterator();
+    }
+
+    private void RankMoves(){ return; }
+
+
+    private void updatePossibleMoves(List<IPlanet> planets){
+
+        moveRanks = new HashMap<>(ownedPlanets.size());
+
+        for(IVisiblePlanet planet: ownedPlanets){
+            HashMap<Integer[],Double> curPlanet = new HashMap<>();
+            for(IEdge edge: planet.getEdges()){
+                for(int i=1; i<4;i++){
+                    Integer[] a = {edge.getDestinationPlanetId(),i};
+                    curPlanet.put(a,1.0);
+                }
+            }
+            moveRanks.put(planet.getId(),curPlanet);
+        }
+    }
+
+
+    public void updateOwnedPlanets(List<IPlanet> planets) {
+
+        ownedPlanets = new ArrayList<>();
+
+        for(IPlanet planet : planets) {
+            if (planet instanceof IVisiblePlanet && ((IVisiblePlanet) planet).getOwner() == Owner.SELF) {
+                ownedPlanets.add((IVisiblePlanet) planet);
             }
         }
     }
 
-    public int hasFriendlyNeighbor(IVisiblePlanet plan) {
-
+    private IVisiblePlanet getOwnedPlanet(int ID){
+        for(IVisiblePlanet p: ownedPlanets){
+            if(p.getId() == ID){
+                return p;
+            }
+        }
+        System.out.println("Error");
+        return null;
     }
 
     public boolean nextAbove(IVisiblePlanet planet) {
@@ -57,12 +111,9 @@ public class Strat implements IStrategy{
         double m = planet.getSize();
 
         pop = pop * (1 + (h / 100));
-        if(pop >= m) {
-            return true;
-        } else {
-            return false;
-        }
+        return pop >= m;
     }
+
 
     public double aboveMax(IVisiblePlanet planet) {
         double pop = planet.getPopulation();
@@ -74,7 +125,8 @@ public class Strat implements IStrategy{
         return ret;
     }
 
-    public double getNetPop(IVisiblePlanet planet, int numTurns) {
+
+    private double getNetPop(IVisiblePlanet planet, int numTurns) {
         List<IShuttle> shuttle = planet.getIncomingShuttles();
         int turns;
         int temp = 0;
@@ -122,7 +174,7 @@ public class Strat implements IStrategy{
                             }
                         }
                         pop -= incoming;
-                        temp += (turns - temp);
+                        temp += (turns-temp);
                     }
                     shuttle.remove(ind);
                     turns = 100;
@@ -168,5 +220,8 @@ public class Strat implements IStrategy{
         return ret;
     }
 
+    public static void main(String[] args){
+
+    }
     
 }
