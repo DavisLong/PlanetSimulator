@@ -8,13 +8,15 @@ public class Strat implements IStrategy{
 
     private HashMap<Integer,HashMap<Integer[],Double>> moveRanks;
     private List<IVisiblePlanet> ownedPlanets;
+    private int count = 0;
 
     @Override
     public void takeTurn(List<IPlanet> planets, IPlanetOperations planetOperations, Queue<IEvent> eventsToExecute) {
-
+        System.out.println(count);
+        count++;
         updateOwnedPlanets(planets);
         updatePossibleMoves(planets);
-        RankMoves();
+        rankMoves();
         Iterator<IEvent> events = getIdealEvents(planetOperations);
         while(events.hasNext()){
             eventsToExecute.add(events.next());
@@ -64,7 +66,21 @@ public class Strat implements IStrategy{
         return events.iterator();
     }
 
-    private void RankMoves(){ return; }
+
+    private void changeRank(int ID, Integer[] move,double factor){
+
+        HashMap<Integer[],Double> planetsMoves = moveRanks.get(ID);
+        double updatedFitness = planetsMoves.get(move) * factor;
+        planetsMoves.replace(move,updatedFitness);
+        moveRanks.replace(ID,planetsMoves);
+
+    }
+
+
+    private void rankMoves(){
+
+
+    }
 
 
     private void updatePossibleMoves(List<IPlanet> planets){
